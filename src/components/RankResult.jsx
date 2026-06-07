@@ -96,10 +96,11 @@ export default function RankResult({ result, liftName, weightKg, reps, onLogAnot
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 12 }}>
-        <button className="btn btn-ghost" style={{ flex: 1 }} onClick={onLogAnother}>
+        <button type="button" className="btn btn-ghost" style={{ flex: 1 }} onClick={onLogAnother}>
           Log Another
         </button>
         <button
+          type="button"
           className="btn btn-ghost"
           style={{ flex: 1, color: 'var(--color-primary)', borderColor: 'rgba(249,115,22,0.2)' }}
           onClick={() => navigate('/history')}

@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import TierStrip from './TierStrip'
 import { formatWeight } from '../utils/e1rm'
+import { useUnitsContext } from '../contexts/UnitsContext'
+import { displayWeight, kgToDisplay, formatWeightDisplay } from '../utils/units'
 
 const RANK_PERCENTILE = {
   beginner:     'Just getting started — keep showing up',
@@ -12,16 +14,20 @@ const RANK_PERCENTILE = {
 
 export default function RankResult({ result, liftName, weightKg, reps, onLogAnother }) {
   const navigate = useNavigate()
+  const { units } = useUnitsContext()
   const { rank, bwRatio, e1rm, nextRank } = result
+
+  const displayedWeight = displayWeight(weightKg, units)
+  const displayedE1rm = formatWeightDisplay(kgToDisplay(e1rm, units), units)
 
   return (
     <div>
       {/* Summary line */}
       <p style={{ color: 'var(--color-muted)', fontSize: 12, textAlign: 'center', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 }}>
-        {liftName} · {weightKg} kg × {reps}
+        {liftName} · {displayedWeight} × {reps}
       </p>
       <p style={{ color: 'var(--color-dim)', fontSize: 11, textAlign: 'center', marginBottom: 20 }}>
-        e1RM {formatWeight(e1rm)} kg · BW ratio {bwRatio}×
+        e1RM {displayedE1rm} · BW ratio {bwRatio}×
       </p>
 
       {/* Rank card */}
@@ -81,7 +87,7 @@ export default function RankResult({ result, liftName, weightKg, reps, onLogAnot
           <p style={{ fontSize: 14, color: 'var(--color-fg)' }}>
             Need{' '}
             <strong style={{ color: 'var(--color-accent)' }}>
-              {formatWeight(nextRank.kgNeeded)} kg
+              {formatWeightDisplay(kgToDisplay(nextRank.kgNeeded, units), units)}
             </strong>{' '}
             more e1RM
           </p>

@@ -4,6 +4,9 @@ import { Settings } from 'lucide-react'
 import RankBadge from './RankBadge'
 import TierStrip from './TierStrip'
 import { formatWeight } from '../utils/e1rm'
+import { useUnitsContext } from '../contexts/UnitsContext'
+import { displayWeight, kgToDisplay, formatWeightDisplay } from '../utils/units'
+import UnitToggle from './UnitToggle'
 
 function groupByDate(log) {
   const groups = {}
@@ -21,6 +24,7 @@ function formatDate(dateStr) {
 
 export default function HistoryList({ log, profile }) {
   const navigate = useNavigate()
+  const { units } = useUnitsContext()
   const [expanded, setExpanded] = useState(null)
   const groups = groupByDate(log)
 
@@ -30,6 +34,7 @@ export default function HistoryList({ log, profile }) {
       <nav className="nav">
         <a href="/log" className="nav-logo">LIFT<span>R</span></a>
         <div className="nav-actions">
+          <UnitToggle />
           <button
             className="icon-btn"
             aria-label="Log a lift"
@@ -94,7 +99,8 @@ export default function HistoryList({ log, profile }) {
                     <div>
                       <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{entry.liftName}</p>
                       <p style={{ color: 'var(--color-muted)', fontSize: 12 }}>
-                        {entry.weightKg} kg × {entry.reps}{entry.sets ? ` × ${entry.sets} sets` : ''}
+                        {displayWeight(entry.weightKg, units)} × {entry.reps}
+                        {entry.sets ? ` × ${entry.sets} sets` : ''}
                       </p>
                     </div>
                     <RankBadge rank={entry.rank} />
@@ -109,7 +115,7 @@ export default function HistoryList({ log, profile }) {
                       border: '1px solid var(--color-border)',
                     }}>
                       <p style={{ color: 'var(--color-dim)', fontSize: 12, marginBottom: 12 }}>
-                        e1RM {formatWeight(entry.e1rm)} kg · BW ratio {entry.bwRatio}×
+                        e1RM {formatWeightDisplay(kgToDisplay(entry.e1rm, units), units)} · BW ratio {entry.bwRatio}×
                       </p>
                       <TierStrip currentRank={entry.rank} />
                     </div>

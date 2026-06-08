@@ -1,18 +1,28 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseExperienceMonths } from '../utils/parse-experience'
+import { useUnitsContext } from '../contexts/UnitsContext'
+import { weightUnit, heightUnit, kgToDisplay, inputToKg, inToCm, cmToIn } from '../utils/units'
+import UnitToggle from './UnitToggle'
 
 export default function ProfileForm({ existingProfile, onSave }) {
   const navigate = useNavigate()
-  const [form, setForm] = useState({
+  const { units } = useUnitsContext()
+
+  const [form, setForm] = useState(() => ({
     sex: existingProfile?.sex ?? 'male',
     age: existingProfile?.age ?? '',
-    weightKg: existingProfile?.weightKg ?? '',
-    heightCm: existingProfile?.heightCm ?? '',
+    // Store as display value in current unit system at mount time
+    weightInput: existingProfile
+      ? String(kgToDisplay(existingProfile.weightKg, units))
+      : '',
+    heightInput: existingProfile
+      ? String(units === 'imperial' ? cmToIn(existingProfile.heightCm) : existingProfile.heightCm)
+      : '',
     experienceText: existingProfile
       ? `${existingProfile.experienceMonths} months`
       : '',
-  })
+  }))
   const [errors, setErrors] = useState({})
 
   function set(field, value) {
@@ -20,11 +30,14 @@ export default function ProfileForm({ existingProfile, onSave }) {
     setErrors((e) => ({ ...e, [field]: undefined }))
   }
 
+  const wUnit = weightUnit(units)
+  const hUnit = heightUnit(units)
+
   function validate() {
     const errs = {}
     if (!form.age || Number(form.age) <= 0) errs.age = 'Enter a valid age'
-    if (!form.weightKg || Number(form.weightKg) <= 0) errs.weightKg = 'Enter a valid weight'
-    if (!form.heightCm || Number(form.heightCm) <= 0) errs.heightCm = 'Enter a valid height'
+    if (!form.weightInput || Number(form.weightInput) <= 0) errs.weightInput = 'Enter a valid weight'
+    if (!form.heightInput || Number(form.heightInput) <= 0) errs.heightInput = 'Enter a valid height'
     if (!form.experienceText.trim()) errs.experienceText = 'Enter your training experience'
     return errs
   }
@@ -33,11 +46,15 @@ export default function ProfileForm({ existingProfile, onSave }) {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
+
+    const weightKg = inputToKg(form.weightInput, units)
+    const heightCm = units === 'imperial' ? inToCm(form.heightInput) : Number(form.heightInput)
+
     onSave({
       sex: form.sex,
       age: Number(form.age),
-      weightKg: Number(form.weightKg),
-      heightCm: Number(form.heightCm),
+      weightKg,
+      heightCm,
       experienceMonths: parseExperienceMonths(form.experienceText),
     })
     navigate('/log')
@@ -45,8 +62,9 @@ export default function ProfileForm({ existingProfile, onSave }) {
 
   return (
     <div className="screen">
-      <div className="app-logo" style={{ marginBottom: 4 }}>
-        LIFT<span>RANK</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+        <div className="app-logo">LIFT<span>RANK</span></div>
+        <UnitToggle />
       </div>
       <p style={{ color: 'var(--color-muted)', marginBottom: 28, fontSize: 13 }}>
         {existingProfile ? 'Edit your profile' : 'Set up your profile once to get accurate rankings'}
@@ -106,34 +124,38 @@ export default function ProfileForm({ existingProfile, onSave }) {
         {/* Weight + Height */}
         <div className="input-row">
           <div className="field">
-            <label className="label" htmlFor="weight">Weight (kg)</label>
+            <label className="label" htmlFor="weight">
+              Weight ({wUnit})
+            </label>
             <input
               id="weight"
               className="input"
               type="number"
               inputMode="decimal"
-              min="20"
-              max="300"
-              placeholder="e.g. 82"
-              value={form.weightKg}
-              onChange={(e) => set('weightKg', e.target.value)}
+              min="0"
+              step={units === 'imperial' ? '1' : '0.5'}
+              placeholder={units === 'imperial' ? 'e.g. 180' : 'e.g. 82'}
+              value={form.weightInput}
+              onChange={(e) => set('weightInput', e.target.value)}
             />
-            {errors.weightKg && <p style={{ color: '#f87171', fontSize: 12, marginTop: 4 }}>{errors.weightKg}</p>}
+            {errors.weightInput && <p style={{ color: '#f87171', fontSize: 12, marginTop: 4 }}>{errors.weightInput}</p>}
           </div>
           <div className="field">
-            <label className="label" htmlFor="height">Height (cm)</label>
+            <label className="label" htmlFor="height">
+              Height ({hUnit})
+            </label>
             <input
               id="height"
               className="input"
               type="number"
               inputMode="numeric"
-              min="100"
-              max="250"
-              placeholder="e.g. 180"
-              value={form.heightCm}
-              onChange={(e) => set('heightCm', e.target.value)}
+              min="0"
+              step="1"
+              placeholder={units === 'imperial' ? 'e.g. 71' : 'e.g. 180'}
+              value={form.heightInput}
+              onChange={(e) => set('heightInput', e.target.value)}
             />
-            {errors.heightCm && <p style={{ color: '#f87171', fontSize: 12, marginTop: 4 }}>{errors.heightCm}</p>}
+            {errors.heightInput && <p style={{ color: '#f87171', fontSize: 12, marginTop: 4 }}>{errors.heightInput}</p>}
           </div>
         </div>
 

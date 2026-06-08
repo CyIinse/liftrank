@@ -5,17 +5,21 @@ import { searchLifts } from '../data/known-lifts'
 import { LIFT_STANDARDS } from '../data/strength-standards'
 import { calcE1RM } from '../utils/e1rm'
 import { getRankResult } from '../utils/ranking'
+import { useUnitsContext } from '../contexts/UnitsContext'
+import { weightUnit, inputToKg } from '../utils/units'
 import CategoryModal from './CategoryModal'
 import RankResult from './RankResult'
+import UnitToggle from './UnitToggle'
 
 export default function LiftLogger({ profile, onEntry }) {
   const navigate = useNavigate()
+  const { units } = useUnitsContext()
   const [liftName, setLiftName] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [selectedLift, setSelectedLift] = useState(null) // { name, category, isKnownLift }
   const [showModal, setShowModal] = useState(false)
   const [pendingCustomName, setPendingCustomName] = useState('')
-  const [weightKg, setWeightKg] = useState('')
+  const [weightInput, setWeightInput] = useState('')
   const [reps, setReps] = useState('')
   const [sets, setSets] = useState('')
   const [result, setResult] = useState(null)
@@ -54,7 +58,7 @@ export default function LiftLogger({ profile, onEntry }) {
 
   const canSubmit =
     selectedLift &&
-    Number(weightKg) > 0 &&
+    Number(weightInput) > 0 &&
     Number(reps) > 0 &&
     Number.isInteger(Number(reps))
 
@@ -62,7 +66,10 @@ export default function LiftLogger({ profile, onEntry }) {
     e.preventDefault()
     if (!canSubmit) return
 
-    const e1rm = calcE1RM(Number(weightKg), Number(reps))
+    // Convert display input to canonical kg for storage and ranking
+    const kg = inputToKg(weightInput, units)
+
+    const e1rm = calcE1RM(kg, Number(reps))
     const rankResult = getRankResult(
       e1rm,
       profile,
@@ -77,7 +84,7 @@ export default function LiftLogger({ profile, onEntry }) {
       liftName: selectedLift.name,
       category: selectedLift.category,
       isKnownLift: selectedLift.isKnownLift,
-      weightKg: Number(weightKg),
+      weightKg: kg,
       reps: Number(reps),
       sets: sets ? Number(sets) : null,
       e1rm: rankResult.e1rm,
@@ -93,7 +100,7 @@ export default function LiftLogger({ profile, onEntry }) {
     setLiftName('')
     setSelectedLift(null)
     setSuggestions([])
-    setWeightKg('')
+    setWeightInput('')
     setReps('')
     setSets('')
     setResult(null)
@@ -106,6 +113,7 @@ export default function LiftLogger({ profile, onEntry }) {
       <nav className="nav">
         <a href="/log" className="nav-logo">LIFT<span>R</span></a>
         <div className="nav-actions">
+          <UnitToggle />
           <button
             className="icon-btn"
             aria-label="View history"
@@ -218,7 +226,9 @@ export default function LiftLogger({ profile, onEntry }) {
           {/* Weight + Reps + Sets */}
           <div className="input-row">
             <div className="field">
-              <label className="label" htmlFor="weight">Weight (kg)</label>
+              <label className="label" htmlFor="weight">
+                Weight ({weightUnit(units)})
+              </label>
               <input
                 id="weight"
                 className="input"
@@ -226,9 +236,9 @@ export default function LiftLogger({ profile, onEntry }) {
                 inputMode="decimal"
                 min="0"
                 step="0.5"
-                placeholder="100"
-                value={weightKg}
-                onChange={(e) => setWeightKg(e.target.value)}
+                placeholder={units === 'imperial' ? '225' : '100'}
+                value={weightInput}
+                onChange={(e) => setWeightInput(e.target.value)}
               />
             </div>
             <div className="field">

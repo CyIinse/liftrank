@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useProfile, isLocalStorageAvailable } from './hooks/useProfile'
 import { useLiftLog } from './hooks/useLiftLog'
+import { UnitsProvider } from './contexts/UnitsContext'
 import ProfileForm from './components/ProfileForm'
 import LiftLogger from './components/LiftLogger'
 import HistoryList from './components/HistoryList'
@@ -56,7 +57,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <UnitsProvider>
+        <AppRoutes />
+      </UnitsProvider>
     </BrowserRouter>
   )
 }
